@@ -1,21 +1,20 @@
 /**
- * Created by fuxiuyuan on 15-3-20.
- */
+  * Created by fuxiuyuan on 15-3-20.
+  */
 
 package com.fuxy.android.ide.plugin.utils
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.{Sdk, ProjectJdkTable}
-import com.intellij.openapi.vcs.impl.DefaultFileIndexFacade
+import com.intellij.openapi.projectRoots.{ProjectJdkTable, Sdk}
+import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.psi._
-import com.intellij.psi.search.{ProjectScopeImpl, EverythingGlobalScope, FilenameIndex}
+import com.intellij.psi.search.{EverythingGlobalScope, FilenameIndex, ProjectScopeImpl}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -38,7 +37,7 @@ object AndroidUtils {
   }
 
   @Nullable
-  def findClass(project: Project,clazz:String): PsiClass = {
+  def findClass(project: Project, clazz: String): PsiClass = {
     val facade = JavaPsiFacade.getInstance(project)
     val findClass = facade.findClass(clazz, new EverythingGlobalScope(project))
     findClass
@@ -59,13 +58,13 @@ object AndroidUtils {
 
   @Nullable
   def isClassSubclassOfActivity(cls: PsiClass): Boolean = {
-    val adapterClass = findClass(cls.getProject,"android.app.Activity")
+    val adapterClass = findClass(cls.getProject, "android.app.Activity")
     return !(adapterClass == null || !cls.isInheritor(adapterClass, true))
   }
 
   @Nullable
   def isClassSubclassOfFragment(cls: PsiClass): Boolean = {
-    val adapterClass = findClass(cls.getProject,"android.app.Fragment")
+    val adapterClass = findClass(cls.getProject, "android.app.Fragment")
     return !(adapterClass == null || !cls.isInheritor(adapterClass, true))
   }
 
@@ -74,7 +73,7 @@ object AndroidUtils {
     val implementsListTypes = cls.getImplementsListTypes
     for (implementsListType <- implementsListTypes) {
       val resolved = implementsListType.resolve()
-      if (resolved != null && "android.os.Parcelable".equals(resolved.getQualifiedName())) {
+      if (resolved != null /*&& "android.os.Parcelable".equals(resolved.getQualifiedName)*/) {
         return true
       }
     }
@@ -100,15 +99,16 @@ object AndroidUtils {
     return findXmlResource(candidate2)
   }
 
-  def findXmlResourceByName(@NotNull project: Project,@NotNull fileName:String): PsiFile = {
+  def findXmlResourceByName(@NotNull project: Project, @NotNull fileName: String): PsiFile = {
     val foundFiles = FilenameIndex
-      .getFilesByName(project, fileName, new ProjectScopeImpl(project,new DefaultFileIndexFacade(project)))
-    if(foundFiles.length <=0) {
-      println("not found %s file!",fileName)
+      .getFilesByName(project, fileName, new ProjectScopeImpl(project,  FileIndexFacade.getInstance(project)))
+    if (foundFiles.length <= 0) {
+      println("not found %s file!", fileName)
       return null;
     }
     foundFiles(0)
   }
+
   @Nullable
   def findXmlResource(elementAt: PsiElement): PsiFile = {
     if (elementAt == null) {
@@ -126,9 +126,8 @@ object AndroidUtils {
     }
     val prj = elementAt.getProject()
     val name = String.format("%s.xml", elementAt.getText)
-    val foundFiles = FilenameIndex
-      .getFilesByName(prj, name,new ProjectScopeImpl(prj,new DefaultFileIndexFacade(prj)) )
-      // new EverythingGlobalScope(prj)
+    val foundFiles = FilenameIndex.getFilesByName(prj, name, new ProjectScopeImpl(prj, FileIndexFacade.getInstance(prj)))
+    // new EverythingGlobalScope(prj)
     if (foundFiles.length <= 0) {
       return null
     }
@@ -152,7 +151,7 @@ object AndroidUtils {
             return
           }
           ret += (new AndroidViewInfo(value, t.getName))
-          println("value:%s, name:%s",value,t.getName)
+          println("value:%s, name:%s", value, t.getName)
         }
 
       }
@@ -176,7 +175,7 @@ object AndroidUtils {
           if (name == null) {
             return
           }
-          ret += (new AndroidStringInfo(t.getValue.getText,name))
+          ret += (new AndroidStringInfo(t.getValue.getText, name))
         }
 
       }
@@ -188,11 +187,11 @@ object AndroidUtils {
   def getTargetClass(editor: Editor, file: PsiFile): PsiClass = {
     val offset = editor.getCaretModel().getOffset();
     val element = file.findElementAt(offset);
-    if(element == null) {
+    if (element == null) {
       return null;
     } else {
-      val target = PsiTreeUtil.getParentOfType(element,classOf[PsiClass]).asInstanceOf[PsiClass]
-      if(!target.isInstanceOf[SyntheticElement]) {
+      val target = PsiTreeUtil.getParentOfType(element, classOf[PsiClass]).asInstanceOf[PsiClass]
+      if (!target.isInstanceOf[SyntheticElement]) {
         return target
       }
     }
